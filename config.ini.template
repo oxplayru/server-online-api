@@ -1,0 +1,13 @@
+[globals]
+api_key=SECRETKEY
+
+[servers]
+server1.ip=127.0.0.1
+server1.port=27015
+server1.name=Garrysmod
+server1.number=1
+
+server2.ip=127.0.0.1
+server2.port=27016
+server2.name=Garrysmod
+server2.number=2
