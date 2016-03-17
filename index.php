@@ -5,19 +5,19 @@ use xPaw\SourceQuery\SourceQuery;
 
 $f3->config('config.ini');
 
-function getServers($servers){
+function getServers($servers, $reconnect_attempts){
 	$ret = array();
 	
 	foreach($servers as $server ){
 		$Query = new SourceQuery( );
 		try
 		{
-			for ($i = 0; $i < 3;$i++ ){
+			for ($i = 0; $i < $reconnect_attempts;$i++ ){
 				if(!$got_sv_info){
 					$Query->Connect( $server["ip"], $server["port"], 1, SourceQuery :: SOURCE );
 					$v = $Query->GetInfo();
 					if (is_array($v)) {
-						array_push($ret, array($server["ip"], $server["port"], $server["name"], $v["Players"], $v["MaxPlayers"], $server["number"]));
+						array_push($ret, array("ip" => $server["ip"], "port" => $server["port"], "name" => $server["name"], "players" => $v["Players"], "max_players" => $v["MaxPlayers"], "number" => $server["number"], "status" => true));
 						$got_sv_info = true;
 					}
 					$Query->Disconnect();
@@ -25,6 +25,11 @@ function getServers($servers){
 					break;
 				}
 			}
+			
+			if(!$got_sv_info){
+				array_push($ret, array("ip" => $server["ip"], "port" => $server["port"], "name" => $server["name"], "players" => 0, "max_players" => 0, "number" => $server["number"], "status" => false));
+			}
+			
 			$got_sv_info = false;
 		}
 		catch( Exception $e )
@@ -44,10 +49,13 @@ $f3->route('GET /',
 
 
 		if (!$cache->exists('servers_list', $sv_list)) {
-			echo 'nothing to show';
-		}else{
-			echo json_encode($sv_list);
+			$sv_list = array();
+			foreach($f3->get('servers') as $server ){
+				array_push($sv_list, array("ip" => $server["ip"], "port" => $server["port"], "name" => $server["name"], "players" => 0, "max_players" => 0, "number" => $server["number"], "status" => false));
+			}
 		}
+
+		echo json_encode($sv_list, JSON_PRETTY_PRINT);
     }
 );
 
@@ -57,10 +65,10 @@ $f3->route('GET /update/@api_key',
 			$cache = Cache::instance();
 			$cache->load(true);
 	
-			$sv_list = getServers($f3->get('servers'));
-			$cache->set('servers_list', $sv_list, 10*60);
+			$sv_list = getServers($f3->get('servers'), $f3->get('reconnect_attempts'));
+			$cache->set('servers_list', $sv_list, $f3->get("cache_clear_time"));
 			
-	        echo '{ "acknowledged" : true }';
+	        echo json_encode(array("acknowledged" => true));
 		}else{
 			echo json_encode(array("acknowledged" => false, "error" => "Wrong API key"));
 		}

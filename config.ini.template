@@ -1,6 +1,7 @@
 [globals]
 api_key=SECRETKEY
-
+reconnect_attempts=3
+cache_clear_time=600
 [servers]
 server1.ip=127.0.0.1
 server1.port=27015
