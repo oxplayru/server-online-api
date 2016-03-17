@@ -1,5 +1,6 @@
 {
     "require": {
-        "bcosca/fatfree-core": "^3.5"
+        "bcosca/fatfree-core": "^3.5",
+        "xpaw/php-source-query-class": "^1.0"
     }
 }
