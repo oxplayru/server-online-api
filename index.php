@@ -1,4 +1,6 @@
 <?php
+header('Access-Control-Allow-Origin: *');
+
 $f3 = require('./vendor/bcosca/fatfree-core/base.php');
 require './vendor/xpaw/php-source-query-class/SourceQuery/bootstrap.php';
 use xPaw\SourceQuery\SourceQuery;
