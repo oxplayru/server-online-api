@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
 $f3 = require('./vendor/bcosca/fatfree-core/base.php');
