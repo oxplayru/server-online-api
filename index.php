@@ -19,8 +19,18 @@ function getServers($servers, $reconnect_attempts){
 				if(!$got_sv_info){
 					$Query->Connect( $server["ip"], $server["port"], 1, SourceQuery :: SOURCE );
 					$v = $Query->GetInfo();
+					
 					if (is_array($v)) {
-						array_push($ret, array("ip" => $server["ip"], "port" => $server["port"], "name" => $server["name"], "players" => $v["Players"], "max_players" => $v["MaxPlayers"], "number" => $server["number"], "status" => true));
+						array_push($ret, array(
+							"ip" => $server["ip"],
+							"port" => $server["port"],
+							"name" => $server["name"],
+							"players" => $v["Players"],
+							"max_players" => $v["MaxPlayers"],
+							"number" => $server["number"],
+							"map" => $v["Map"],
+							"status" => true)
+						);
 						$got_sv_info = true;
 					}
 					$Query->Disconnect();
@@ -30,7 +40,16 @@ function getServers($servers, $reconnect_attempts){
 			}
 			
 			if(!$got_sv_info){
-				array_push($ret, array("ip" => $server["ip"], "port" => $server["port"], "name" => $server["name"], "players" => 0, "max_players" => 0, "number" => $server["number"], "status" => false));
+				array_push($ret, array(
+					"ip" => $server["ip"],
+					"port" => $server["port"],
+					"name" => $server["name"],
+					"players" => 0,
+					"max_players" => 0,
+					"number" => $server["number"],
+					"map" => "N/A",
+					"status" => false)
+				);
 			}
 			
 			$got_sv_info = false;
@@ -54,7 +73,16 @@ $f3->route('GET /',
 		if (!$cache->exists('servers_list', $sv_list)) {
 			$sv_list = array();
 			foreach($f3->get('servers') as $server ){
-				array_push($sv_list, array("ip" => $server["ip"], "port" => $server["port"], "name" => $server["name"], "players" => 0, "max_players" => 0, "number" => $server["number"], "status" => false));
+				array_push($sv_list, array(
+					"ip" => $server["ip"],
+					"port" => $server["port"],
+					"name" => $server["name"],
+					"players" => 0,
+					"max_players" => 0,
+					"number" => $server["number"],
+					"map" => "N/A",
+					"status" => false)
+				);
 			}
 			$sv_list = array("last_update" => false, "servers" => $sv_list);
 		}
