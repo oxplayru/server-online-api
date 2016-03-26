@@ -98,6 +98,7 @@ $f3->route('GET /update/@api_key',
 			$cache->load(true);
 	
 			$sv_list = array("last_update" => time() , "servers" => getServers($f3->get('servers'), $f3->get('reconnect_attempts')));
+			$cache->clear('servers_list'); //Because function 'set' don't update cache time.
 			$cache->set('servers_list', $sv_list, $f3->get("cache_clear_time"));
 			
 	        echo json_encode(array("acknowledged" => true));
@@ -121,5 +122,6 @@ $f3->route('GET /clear/@api_key',
 		}
     }
 );
+
 
 $f3->run();
