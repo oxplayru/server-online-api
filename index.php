@@ -8,6 +8,12 @@ use xPaw\SourceQuery\SourceQuery;
 
 $f3->config('config.ini');
 
+if(preg_match("/c9users.io/", $_SERVER['HTTP_HOST']) || $_SERVER['HTTP_HOST'] == "localhost"){
+	$f3->set('DEBUG', 3);
+}else{
+	$f3->set('DEBUG', 0);
+}
+
 function getServers($servers, $reconnect_attempts){
 	$ret = array();
 	
@@ -18,9 +24,11 @@ function getServers($servers, $reconnect_attempts){
 			for ($i = 0; $i < $reconnect_attempts;$i++ ){
 				if(!$got_sv_info){
 					$Query->Connect( $server["ip"], $server["port"], 1, SourceQuery :: SOURCE );
-					$v = $Query->GetInfo();
 					
-					if (is_array($v)) {
+					$v = $Query->GetInfo();
+					$p = $Query->GetPlayers();
+					
+					if (is_array($v) && is_array($p)) {
 						array_push($ret, array(
 							"ip" => $server["ip"],
 							"port" => $server["port"],
@@ -29,6 +37,7 @@ function getServers($servers, $reconnect_attempts){
 							"max_players" => $v["MaxPlayers"],
 							"number" => $server["number"],
 							"map" => $v["Map"],
+							"players_list" => $p,
 							"status" => true)
 						);
 						$got_sv_info = true;
@@ -48,6 +57,7 @@ function getServers($servers, $reconnect_attempts){
 					"max_players" => 0,
 					"number" => $server["number"],
 					"map" => "N/A",
+					"players_list" => false,
 					"status" => false)
 				);
 			}
@@ -69,7 +79,6 @@ $f3->route('GET /',
 		$cache = Cache::instance();
 		$cache->load(true);
 
-
 		if (!$cache->exists('servers_list', $sv_list)) {
 			$sv_list = array();
 			foreach($f3->get('servers') as $server ){
@@ -81,13 +90,18 @@ $f3->route('GET /',
 					"max_players" => 0,
 					"number" => $server["number"],
 					"map" => "N/A",
+					"players_list" => false,
 					"status" => false)
 				);
 			}
 			$sv_list = array("last_update" => false, "servers" => $sv_list);
 		}
 
-		echo json_encode($sv_list, JSON_PRETTY_PRINT);
+		if($f3->get('DEBUG') > 0){ 
+			echo json_encode(utf8_converter($sv_list), JSON_PRETTY_PRINT);
+		}else{
+			echo json_encode(utf8_converter($sv_list));
+		}
     }
 );
 
@@ -122,6 +136,18 @@ $f3->route('GET /clear/@api_key',
 		}
     }
 );
+
+
+function utf8_converter($array)
+{
+    array_walk_recursive($array, function(&$item, $key){
+        if(!mb_detect_encoding($item, 'utf-8', true)){
+                $item = utf8_encode($item);
+        }
+    });
+ 
+    return $array;
+}
 
 
 $f3->run();
