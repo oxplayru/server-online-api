@@ -107,13 +107,25 @@ $f3->route('GET /',
 
 $f3->route('GET /update/@api_key',
     function($f3) {
-		if ($f3->get('PARAMS.api_key') == $f3->get('api_key')){
+    	
+    	if (getenv('API_KEY')) {
+    		$api_key = getenv('API_KEY');
+    	}else{
+    		$api_key = $f3->get('api_key');
+    	}
+    	
+		if ($api_key == $f3->get('PARAMS.api_key')){
 			$cache = Cache::instance();
 			$cache->load(true);
 	
 			$sv_list = array("last_update" => time() , "servers" => getServers($f3->get('servers'), $f3->get('reconnect_attempts')));
 			$cache->clear('servers_list'); //Because function 'set' don't update cache time.
 			$cache->set('servers_list', $sv_list, $f3->get("cache_clear_time"));
+			
+			if(getenv('REMOTE_CONFIG_URL')){
+				$config_file = file_get_contents(getenv('REMOTE_CONFIG_URL'));
+				file_put_contents("config.ini", $config_file);
+			}
 			
 	        echo json_encode(array("acknowledged" => true));
 		}else{
@@ -124,7 +136,14 @@ $f3->route('GET /update/@api_key',
 
 $f3->route('GET /clear/@api_key',
     function($f3) {
-		if ($f3->get('PARAMS.api_key') == $f3->get('api_key')){
+    	
+    	if (getenv('API_KEY')) {
+    		$api_key = getenv('API_KEY');
+    	}else{
+    		$api_key = $f3->get('api_key');
+    	}
+    	
+		if ($api_key == $f3->get('PARAMS.api_key')){
 			$cache = Cache::instance();
 			$cache->load(true);
 	
