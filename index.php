@@ -75,32 +75,35 @@ function getServers($servers, $reconnect_attempts){
 
 $f3->route('GET /',
     function($f3) {
-
-		$cache = Cache::instance();
-		$cache->load(true);
-
-		if (!$cache->exists('servers_list', $sv_list)) {
-			$sv_list = array();
-			foreach($f3->get('servers') as $server ){
-				array_push($sv_list, array(
-					"ip" => $server["ip"],
-					"port" => $server["port"],
-					"name" => $server["name"],
-					"players" => 0,
-					"max_players" => 0,
-					"number" => $server["number"],
-					"map" => "N/A",
-					"players_list" => false,
-					"status" => false)
-				);
+		if (file_exists("config.ini")) {
+			$cache = Cache::instance();
+			$cache->load(true);
+	
+			if (!$cache->exists('servers_list', $sv_list)) {
+				$sv_list = array();
+				foreach($f3->get('servers') as $server ){
+					array_push($sv_list, array(
+						"ip" => $server["ip"],
+						"port" => $server["port"],
+						"name" => $server["name"],
+						"players" => 0,
+						"max_players" => 0,
+						"number" => $server["number"],
+						"map" => "N/A",
+						"players_list" => false,
+						"status" => false)
+					);
+				}
+				$sv_list = array("last_update" => false, "servers" => $sv_list);
 			}
-			$sv_list = array("last_update" => false, "servers" => $sv_list);
-		}
-
-		if($f3->get('DEBUG') > 0){ 
-			echo json_encode(utf8_converter($sv_list), JSON_PRETTY_PRINT);
+	
+			if($f3->get('DEBUG') > 0){ 
+				echo json_encode(utf8_converter($sv_list), JSON_PRETTY_PRINT);
+			}else{
+				echo json_encode(utf8_converter($sv_list));
+			}
 		}else{
-			echo json_encode(utf8_converter($sv_list));
+			echo json_encode(array("acknowledged" => false, "error" => "Config file not found"));
 		}
     }
 );
@@ -115,12 +118,14 @@ $f3->route('GET /update/@api_key',
     	}
     	
 		if ($api_key == $f3->get('PARAMS.api_key')){
-			$cache = Cache::instance();
-			$cache->load(true);
-	
-			$sv_list = array("last_update" => time() , "servers" => getServers($f3->get('servers'), $f3->get('reconnect_attempts')));
-			$cache->clear('servers_list'); //Because function 'set' don't update cache time.
-			$cache->set('servers_list', $sv_list, $f3->get("cache_clear_time"));
+			if (file_exists("config.ini")) {
+				$cache = Cache::instance();
+				$cache->load(true);
+		
+				$sv_list = array("last_update" => time() , "servers" => getServers($f3->get('servers'), $f3->get('reconnect_attempts')));
+				$cache->clear('servers_list'); //Because function 'set' don't update cache time.
+				$cache->set('servers_list', $sv_list, $f3->get("cache_clear_time"));
+			}
 			
 			if(getenv('REMOTE_CONFIG_URL')){
 				$config_file = file_get_contents(getenv('REMOTE_CONFIG_URL'));
@@ -143,15 +148,19 @@ $f3->route('GET /clear/@api_key',
     		$api_key = $f3->get('api_key');
     	}
     	
-		if ($api_key == $f3->get('PARAMS.api_key')){
-			$cache = Cache::instance();
-			$cache->load(true);
-	
-			$cache->clear('servers_list');
-			
-	        echo json_encode(array("acknowledged" => true));
+    	if (file_exists("config.ini")) {
+			if ($api_key == $f3->get('PARAMS.api_key')){
+				$cache = Cache::instance();
+				$cache->load(true);
+		
+				$cache->clear('servers_list');
+				
+		        echo json_encode(array("acknowledged" => true));
+			}else{
+				echo json_encode(array("acknowledged" => false, "error" => "Wrong API key"));
+			}
 		}else{
-			echo json_encode(array("acknowledged" => false, "error" => "Wrong API key"));
+			echo json_encode(array("acknowledged" => false, "error" => "Config file not found"));
 		}
     }
 );
